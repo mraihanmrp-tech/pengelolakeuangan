@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bijak Uang - Bijak Mengelola, Hidup Sejahtera</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+
+    <div id="auth-container" class="auth-container">
+        <div class="auth-box">
+            <div class="auth-logo-wrapper">
+                <img src="logo.jpeg" alt="Logo Bijak Uang" class="app-logo-large">
+            </div>
+            <h2 id="auth-title">Masuk ke Bijak Uang</h2>
+            <p id="auth-subtitle">Bijak Mengelola, Hidup Sejahtera.</p>
+            <form id="auth-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required placeholder="Masukkan username">
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="Masukkan password">
+                </div>
+                <button type="submit" id="btn-auth-submit" class="btn btn-primary">Masuk</button>
+            </form>
+            <p class="auth-toggle">Belum punya akun? <span id="toggle-auth-mode">Daftar sekarang</span></p>
+        </div>
+    </div>
+
+    <div id="app-container" class="app-container hidden">
+        
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="logo.jpeg" alt="Logo Bijak Uang" class="app-logo-small">
+                <h2>Bijak Uang</h2>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> <span>Ringkasan</span></button>
+                <button class="nav-item" onclick="switchTab('laporan')"><i class="fa-solid fa-file-invoice-dollar"></i> <span>Laporan</span></button>
+                <button class="nav-item" onclick="switchTab('tagihan')"><i class="fa-solid fa-clock"></i> <span>Tagihan</span></button>
+                <button class="nav-item" onclick="switchTab('hutang')"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Hutang</span></button>
+            </nav>
+            <div class="sidebar-footer">
+                <p>Halo, <span id="user-display">User</span></p>
+                <button onclick="logout()" class="btn btn-danger btn-sm"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <section id="tab-dashboard" class="tab-content active">
+                <header class="content-header">
+                    <h1>Ringkasan Keuangan</h1>
+                </header>
+                
+                <div class="cards-grid">
+                    <div class="card card-balance">
+                        <h3><i class="fa-solid fa-scale-balanced"></i> Saldo Saat Ini</h3>
+                        <p class="amount" id="txt-total-saldo">Rp 0</p>
+                    </div>
+                    <div class="card card-income">
+                        <h3><i class="fa-solid fa-arrow-trend-up"></i> Pemasukan Bulan Ini</h3>
+                        <p class="amount" id="txt-total-income">Rp 0</p>
+                    </div>
+                    <div class="card card-expense">
+                        <h3><i class="fa-solid fa-arrow-trend-down"></i> Pengeluaran Bulan Ini</h3>
+                        <p class="amount" id="txt-total-expense">Rp 0</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-body">
+                    <div class="card form-card">
+                        <h3>Tambah Transaksi Baru</h3>
+                        <form id="form-transaction">
+                            <div class="input-group">
+                                <label>Jenis</label>
+                                <select id="tx-type" required>
+                                    <option value="pemasukan">Pemasukan</option>
+                                    <option value="pengeluaran">Pengeluaran</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Kategori</label>
+                                <input type="text" id="tx-category" placeholder="Gaji, Makanan, Listrik, dll" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Jumlah (Rp)</label>
+                                <input type="number" id="tx-amount" placeholder="0" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Tanggal</label>
+                                <input type="date" id="tx-date" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Simpan Transaksi</button>
+                        </form>
+                    </div>
+                    <div class="card chart-card">
+                        <h3>Tren Keuangan Bulanan</h3>
+                        <div class="chart-container">
+                            <canvas id="chart-tren"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-laporan" class="tab-content">
+                <header class="content-header flex-header">
+                    <h1>Laporan & Analisis</h1>
+                    <div class="action-buttons">
+                        <button onclick="exportToPDF()" class="btn btn-secondary"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
+                </header>
+
+                <div id="report-pdf-area">
+                    <div class="report-filter card">
+                        <div class="input-group no-margin">
+                            <label>Filter Periode</label>
+                            <select id="report-filter-select" onchange="renderLaporan()">
+                                <option value="all">Semua Catatan</option>
+                                <option value="harian">Hari Ini</option>
+                                <option value="mingguan">Minggu Ini</option>
+                                <option value="bulanan">Bulan Ini</option>
+                                <option value="tahunan">Tahun Ini</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="analytics-grid">
+                        <div class="card">
+                            <h3>Proporsi Pengeluaran</h3>
+                            <div class="chart-container-sm">
+                                <canvas id="chart-pie-kategori"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3>Perbandingan Arus Kas</h3>
+                            <div class="chart-container-sm">
+                                <canvas id="chart-bar-cashflow"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-20">
+                        <h3>Riwayat Catatan Transaksi</h3>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Jenis</th>
+                                        <th>Kategori</th>
+                                        <th>Jumlah</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-tx-body">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-tagihan" class="tab-content">
+                <header class="content-header">
+                    <h1>Pengingat Tagihan</h1>
+                </header>
+                <div class="dashboard-body">
+                    <div class="card form-card">
+                        <h3>Tambah Tagihan Baru</h3>
+                        <form id="form-bill">
+                            <div class="input-group">
+                                <label>Nama Tagihan</label>
+                                <input type="text" id="bill-name" placeholder="Listrik, Wifi, Netflix, dll" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Jumlah (Rp)</label>
+                                <input type="number" id="bill-amount" placeholder="0" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Tanggal Jatuh Tempo</label>
+                                <input type="date" id="bill-date" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Tambah Pengingat</button>
+                        </form>
+                    </div>
+                    <div class="card list-card">
+                        <h3>Kalender & Jadwal Tagihan</h3>
+                        <div id="bill-list" class="reminder-list">
+                            </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-hutang" class="tab-content">
+                <header class="content-header">
+                    <h1>Hutang & Piutang</h1>
+                </header>
+                <div class="dashboard-body">
+                    <div class="card form-card">
+                        <h3>Catat Hutang / Piutang</h3>
+                        <form id="form-debt">
+                            <div class="input-group">
+                                <label>Jenis</label>
+                                <select id="debt-type" required>
+                                    <option value="hutang">Hutang (Saya Meminjam)</option>
+                                    <option value="piutang">Piutang (Orang Lain Meminjam)</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Nama Pihak Kedua</label>
+                                <input type="text" id="debt-person" placeholder="Nama teman / lembaga" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Jumlah (Rp)</label>
+                                <input type="number" id="debt-amount" placeholder="0" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Tenggat Waktu</label>
+                                <input type="date" id="debt-date" required>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100">Simpan Catatan</button>
+                        </form>
+                    </div>
+                    <div class="card list-card">
+                        <h3>Daftar Hutang & Piutang Aktif</h3>
+                        <div id="debt-list" class="reminder-list">
+                            </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
